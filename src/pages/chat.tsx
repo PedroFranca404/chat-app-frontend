@@ -1,17 +1,20 @@
-import { Button } from '@/components/ui/button'
-import { isAuthenticated } from '@/service/auth'
-import { createFileRoute } from '@tanstack/react-router'
+import { isAuthenticated } from "@/service/auth";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/chat')({
-  beforeLoad: () => {
-    if(!isAuthenticated()){
-      return;
+export const Route = createFileRoute("/chat")({
+  beforeLoad: async ({ location }) => {
+    if (!isAuthenticated()) {
+      throw redirect({
+        to: "/login",
+        search: {
+          redirect: location.href,
+        },
+      });
     }
-    return;
   },
   component: RouteComponent,
-})
+});
 
 function RouteComponent() {
-  return <Button onClick={isAuthenticated}>IsLoggedIn</Button>
+  return <div>Chat</div>;
 }

@@ -1,4 +1,4 @@
-import { API_URL, JWT_KEY } from "@/lib/env";
+import { API_URL } from "@/lib/env";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
@@ -23,9 +23,43 @@ interface RegisterRequest {
 export const Login = async (request: LoginRequest) => {
   const login = await api.post("/auth/sign-in", request);
   return login;
-}
+};
 
 export const Register = async (request: RegisterRequest) => {
   const register = await api.post("/auth/sign-up", request);
   return register;
-}
+};
+
+export const isAuthenticated = async () => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    if (!accessToken || !refreshToken) {
+      return false;
+    }
+
+    const decodedAccessToken = jwtDecode(accessToken);
+    const decodedRefreshToken = jwtDecode(refreshToken);
+    const currentTime = Date.now() / 1000;
+
+    if (decodedAccessToken.exp! > currentTime) {
+      return true;
+    }
+
+    if (decodedRefreshToken.exp! > currentTime) {
+      const response = await api.post("/auth/refresh", { refreshToken });
+
+      if (response.data?.accessToken && response.data?.refreshToken) {
+        localStorage.setItem("accessToken", response.data.accessToken);
+        localStorage.setItem("refreshToken", response.data.refreshToken);
+        return true;
+      }
+    }
+
+    return false;
+  } catch (error) {
+    console.log("Error checking authentication:", error);
+    return false;
+  }
+};
