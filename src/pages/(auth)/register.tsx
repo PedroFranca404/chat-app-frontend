@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,9 +11,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Register } from "@/service/auth";
+import { isAuthenticated, Register } from "@/service/auth";
+import { router } from "@/App";
 
 export const Route = createFileRoute("/(auth)/register")({
+  beforeLoad: async () => {
+    let authenticated: boolean = await isAuthenticated();
+    if (authenticated) {
+      throw redirect({
+        to: "/",
+      });
+    }
+  },
   component: RouteComponent,
 });
 
@@ -53,7 +62,7 @@ function RouteComponent() {
     const response = await Register(formData);
     localStorage.setItem("accessToken", response.data.accessToken);
     localStorage.setItem("refreshToken", response.data.refreshToken);
-    console.log(response);
+    router.load();
   };
 
   return (

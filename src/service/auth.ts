@@ -1,3 +1,4 @@
+import { router } from "@/App";
 import { API_URL } from "@/lib/env";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -48,18 +49,34 @@ export const isAuthenticated = async () => {
     }
 
     if (decodedRefreshToken.exp! > currentTime) {
-      const response = await api.post("/auth/refresh", { refreshToken });
+      const response = await api.post("/auth/refresh", {
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      });
 
-      if (response.data?.accessToken && response.data?.refreshToken) {
-        localStorage.setItem("accessToken", response.data.accessToken);
-        localStorage.setItem("refreshToken", response.data.refreshToken);
+      console.log(response);
+
+      if (response.data?.newAccessToken && response.data?.newRefreshToken) {
+        localStorage.setItem("accessToken", response.data.newAccessToken);
+        localStorage.setItem("refreshToken", response.data.newRefreshToken);
         return true;
       }
     }
-
     return false;
   } catch (error) {
-    console.log("Error checking authentication:", error);
+    console.log(error);
     return false;
   }
+};
+
+export const logout = async () => {
+  const accessToken = localStorage.getItem("accessToken");
+  const refreshToken = localStorage.getItem("refreshToken");
+
+  await api.post("/auth/sign-out", { accessToken, refreshToken });
+
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+
+  router.navigate({ to: "/login" });
 };
